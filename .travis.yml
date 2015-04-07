@@ -1,0 +1,22 @@
+language: java
+script: gradle dist
+install:
+- echo sonatypeUsername=none >> gradle.properties
+- echo sonatypePassword=none >> gradle.properties
+env:
+  global:
+  - LD_LIBRARY_PATH=/home/travis/build/ndw/xmlcalabash1-deltaxml/lib/AH
+  - secure: fRzeI+ubVUMZ3NX0hWDYbaiERWkcqoZBtIUhXPVdCqGsH9FZXsj3ePGRKH81lbttWsLk6Gly/Psq31BRJUcaOy3e7cp/oxvtxdFt3F/mJWjhvLxWbz5+35S8QqtmCnj0f/OuQDMubmngImNZrme1IK3LGcrgJThiLBrQN+OFx08=
+  - secure: Ye/YytX+GglRRL/NPnlXcq+WsUm7tGz737e+4cztBYyzjwBzUd9jb8xIyeZjNYOYd4NYDgM207Egj6AhapIjZWwY4HUXZ3c861iAo7D5OnwLfy5Oi50nJbQUWlz1JpdT0owWWyvMEQk33oF5QVqUzvr2iQapLt27hj7yQj7nWjo=
+  - secure: BG6t+dBtbeiMQcYFIXZYffOzAsIpZjbUKKbiaxk+CEd/6dGiflRYCEwrMnf++mjPVF783BifJBkOScCxaJSdE32crvz5tIKaLYnWB2Ov1QYHUOu4cW5yZa3+xfoPT+z5vvZki0bd95phd4azt6ZTPMMMW39jWlPYCqANXG95cHw=
+before_install:
+- lib/update-lib.sh
+deploy:
+  provider: releases
+  api_key:
+    secure: CeHSwi5T/PY6+ORQocVlrBbY7c4YnPTqwwCrGMQjrS+1ZN5NyNuBebfu9yrVMToctA611vSziNr3y6jGl5ZZfpuDJjYGe9iDK4o6sv9KjUyPS6NACVJVq8h/Qf45eOnjSTwrKN3swBeQVWNtSYAfiJgZyLL7ZOJaXMHJELNISLA=
+  file:
+  - build/distributions/xmlcalabash1-deltaxml-$TRAVIS_TAG.zip
+  on:
+    tags: true
+    all_branches: true
