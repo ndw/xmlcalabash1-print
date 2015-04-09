@@ -1,0 +1,55 @@
+Copyright (C) 2015 Norman Walsh
+All rights reserved.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+<http://www.apache.org/licenses/LICENSE-2.0>
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+In addition, certain libraries used in this module are released under
+their own license terms, as listed below.
+
+The following unmodified libraries are released under the Apache
+license, Version 2.0:
+
+  avalon-framework-api-x.x.x.jar
+  avalon-framework-impl-xx.x..jar
+  batik-anim-x.x.jar
+  batik-awt-util-x.x.jar
+  batik-bridge-x.x.jar
+  batik-css-x.x.jar
+  batik-dom-x.x.jar
+  batik-ext-x.x.jar
+  batik-extension-x.x.jar
+  batik-gvt-x.x.jar
+  batik-js-x.x.jar
+  batik-parser-x.x.jar
+  batik-script-x.x.jar
+  batik-svg-dom-x.x.jar
+  batik-svggen-x.x.jar
+  batik-transcoder-x.x.jar
+  batik-util-x.x.jar
+  batik-xml-x.x.jar
+  commons-io-x.x.x.jar
+  commons-logging-x.x.x.jar
+  fop-x.x.jar
+  xalan-x.x.x.jar
+  xml-apis-x.x.x.jar
+  xml-apis-ext-x.x.x.jar
+  xmlgraphics-commons-x.x.jar
+
+In the future, additional dependent libraries may be included as
+transitive dependencies downloaded from Maven. They are distributed
+unmodified under their own license terms as well.
+
+Contacting the Author
+---------------------
+This extension is maintained by Norman Walsh, <ndw@nwalsh.com>
