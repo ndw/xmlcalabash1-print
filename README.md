@@ -1,5 +1,7 @@
 # XML Calabash support for printing with XSL FO and CSS
 
+[![Build Status](https://travis-ci.org/ndw/xmlcalabash1-print.svg?branch=master)](https://travis-ci.org/ndw/xmlcalabash1-print.svg?branch=master)
+
 This repository contains
 [XML Calabash 1.0](http://github.com/ndw/xmlcalabash1) support for
 printing with
