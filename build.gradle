@@ -45,7 +45,7 @@ dependencies {
   localLibs fileTree(dir: 'lib').include("*.jar")
   compile (
     [group: 'com.nwalsh', name: 'nwalsh-annotations', version: '1.0.0'],
-    [group: 'com.xmlcalabash', name: 'xmlcalabash', version: '1.1.0-95'],
+    [group: 'com.xmlcalabash', name: 'xmlcalabash', version: '1.1.1-95'],
     [group: 'org.apache.xmlgraphics', name: 'fop', version: '1.1'],
     [group: 'org.apache.avalon.framework', name: 'avalon-framework-api', version: '4.3.1'],
     [group: 'org.apache.avalon.framework', name: 'avalon-framework-impl', version: '4.3.1']
