@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/ndw/xmlcalabash1-print.svg?branch=master)](https://travis-ci.org/ndw/xmlcalabash1-print.svg?branch=master)
 
 This repository contains
-[XML Calabash 1.0](http://github.com/ndw/xmlcalabash1) support for
+[XML Calabash](http://github.com/ndw/xmlcalabash1) 1.1 support for
 printing with
 [XSL FO](http://www.w3.org/standards/techs/xsl#w3c_all) or
 [CSS](http://www.w3.org/Style/CSS/).
