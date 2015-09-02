@@ -8,11 +8,14 @@ import com.xmlcalabash.core.XProcException;
 import com.xmlcalabash.core.XProcRuntime;
 import com.xmlcalabash.runtime.XStep;
 import net.sf.saxon.s9api.QName;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.Serializer;
 import net.sf.saxon.s9api.XdmNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -220,7 +223,17 @@ public class CssPrince implements CssProcessor {
                 prince.addStyleSheet(uri);
             }
 
-            ByteArrayInputStream bis = new ByteArrayInputStream(doc.toString().getBytes("UTF-8"));
+            Serializer serializer = runtime.getProcessor().newSerializer();
+            serializer.setOutputProperty(Serializer.Property.METHOD, "xml");
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try {
+                serializer.setOutputStream(baos);
+                S9apiUtils.serialize(runtime, doc, serializer);
+            } catch (SaxonApiException sae) {
+                throw new XProcException(sae);
+            }
+
+            ByteArrayInputStream bis = new ByteArrayInputStream(baos.toByteArray());
             prince.convert(bis, out);
         } catch (IOException e) {
             logger.debug(e.getMessage(), e);

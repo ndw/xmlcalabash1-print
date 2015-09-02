@@ -10,11 +10,14 @@ import jp.co.antenna.XfoJavaCtl.XfoException;
 import jp.co.antenna.XfoJavaCtl.XfoFormatPageListener;
 import jp.co.antenna.XfoJavaCtl.XfoObj;
 import net.sf.saxon.s9api.QName;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.Serializer;
 import net.sf.saxon.s9api.XdmNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -23,6 +26,7 @@ import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 import java.util.Vector;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -201,15 +205,21 @@ public class CssAH implements CssProcessor {
                 ah.addUserStylesheetURI(uri);
             }
 
-            // Holy hack on a cracker!
-            ByteArrayInputStream bis = new ByteArrayInputStream(doc.toString().getBytes("UTF-8"));
+            Serializer serializer = runtime.getProcessor().newSerializer();
+            serializer.setOutputProperty(Serializer.Property.METHOD, "xml");
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try {
+                serializer.setOutputStream(baos);
+                S9apiUtils.serialize(runtime, doc, serializer);
+            } catch (SaxonApiException sae) {
+                throw new XProcException(sae);
+            }
+
+            ByteArrayInputStream bis = new ByteArrayInputStream(baos.toByteArray());
             ah.render(bis, out, outputFormat);
             ah.releaseObjectEx();
         } catch (XfoException e) {
             logger.debug(e.getMessage(), e);
-            throw new XProcException(e);
-        } catch (UnsupportedEncodingException e) {
-            // won't happen
             throw new XProcException(e);
         }
     }
@@ -223,7 +233,7 @@ public class CssAH implements CssProcessor {
         if (s != null) {
             try {
                 int i = Integer.parseInt(s);
-                return new Integer(i);
+                return i;
             } catch (NumberFormatException nfe) {
                 return null;
             }

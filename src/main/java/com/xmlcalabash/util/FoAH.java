@@ -9,6 +9,8 @@ import jp.co.antenna.XfoJavaCtl.MessageListener;
 import jp.co.antenna.XfoJavaCtl.XfoException;
 import jp.co.antenna.XfoJavaCtl.XfoFormatPageListener;
 import jp.co.antenna.XfoJavaCtl.XfoObj;
+import net.sf.saxon.s9api.SaxonApiException;
+import net.sf.saxon.s9api.Serializer;
 import net.sf.saxon.s9api.XdmNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,7 @@ public class FoAH implements FoProcessor {
         this.runtime = runtime;
         this.step = step;
         this.options = options;
+
         try {
             ah = new XfoObj();
             ah.setFormatterType(XfoObj.S_FORMATTERTYPE_XSLFO);
@@ -128,15 +131,21 @@ public class FoAH implements FoProcessor {
         }
 
         try {
-            // Holy hack on a cracker!
-            ByteArrayInputStream bis = new ByteArrayInputStream(doc.toString().getBytes("UTF-8"));
+            Serializer serializer = runtime.getProcessor().newSerializer();
+            serializer.setOutputProperty(Serializer.Property.METHOD, "xml");
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try {
+                serializer.setOutputStream(baos);
+                S9apiUtils.serialize(runtime, doc, serializer);
+            } catch (SaxonApiException sae) {
+                throw new XProcException(sae);
+            }
+
+            ByteArrayInputStream bis = new ByteArrayInputStream(baos.toByteArray());
             ah.render(bis, out, outputFormat);
             ah.releaseObjectEx();
         } catch (XfoException e) {
             logger.debug(e.getMessage(), e);
-            throw new XProcException(e);
-        } catch (UnsupportedEncodingException e) {
-            // won't happen
             throw new XProcException(e);
         }
     }
