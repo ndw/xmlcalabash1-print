@@ -136,13 +136,21 @@ public class CssAH implements CssProcessor {
         }
     }
 
+    public void addStylesheet(String uri) {
+        if (primarySS == null) {
+            primarySS = uri;
+        } else {
+            userSS.add(uri);
+        }
+    }
+
     public void addStylesheet(XdmNode doc) {
         doc = S9apiUtils.getDocumentElement(doc);
 
         String stylesheet = null;
         if ((XProcConstants.c_data.equals(doc.getNodeName())
-             && "application/octet-stream".equals(doc.getAttributeValue(_content_type)))
-            || "base64".equals(doc.getAttributeValue(_encoding))) {
+                && "application/octet-stream".equals(doc.getAttributeValue(_content_type)))
+                || "base64".equals(doc.getAttributeValue(_encoding))) {
             byte[] decoded = Base64.decode(doc.getStringValue());
             stylesheet = new String(decoded);
         } else {
@@ -232,8 +240,7 @@ public class CssAH implements CssProcessor {
         String s = getStringProp(name);
         if (s != null) {
             try {
-                int i = Integer.parseInt(s);
-                return i;
+                return Integer.parseInt(s);
             } catch (NumberFormatException nfe) {
                 return null;
             }

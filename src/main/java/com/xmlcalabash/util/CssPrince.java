@@ -169,6 +169,14 @@ public class CssPrince implements CssProcessor {
         }
     }
 
+    public void addStylesheet(String uri) {
+        if (primarySS == null) {
+            primarySS = uri;
+        } else {
+            userSS.add(uri);
+        }
+    }
+
     public void addStylesheet(XdmNode doc) {
         doc = S9apiUtils.getDocumentElement(doc);
 
