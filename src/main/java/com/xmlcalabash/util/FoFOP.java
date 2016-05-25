@@ -5,10 +5,7 @@ import com.xmlcalabash.core.XProcException;
 import com.xmlcalabash.core.XProcRuntime;
 import com.xmlcalabash.runtime.XStep;
 import net.sf.saxon.s9api.XdmNode;
-import org.apache.fop.apps.FOUserAgent;
-import org.apache.fop.apps.Fop;
-import org.apache.fop.apps.FopFactory;
-import org.apache.fop.apps.MimeConstants;
+import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 
 import javax.xml.transform.Transformer;
@@ -17,6 +14,9 @@ import javax.xml.transform.URIResolver;
 import javax.xml.transform.sax.SAXResult;
 import javax.xml.transform.sax.SAXSource;
 import java.io.OutputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.net.URI;
 import java.text.DateFormat;
 import java.util.Date;
 import java.util.Properties;
@@ -30,89 +30,271 @@ import java.util.Properties;
  */
 public class FoFOP implements FoProcessor {
     XProcRuntime runtime = null;
-    FopFactory fopFactory = null;
     Properties options = null;
     XStep step = null;
     URIResolver resolver = null;
+
+    private Class klass = null;
+    private Method method = null;
+    private String fopVersion = null;
+    private Object fopFactory = null;
 
     public void initialize(XProcRuntime runtime, XStep step, Properties options) {
         this.runtime = runtime;
         this.step = step;
         this.options = options;
 
-        fopFactory = FopFactory.newInstance();
-        resolver = runtime.getResolver();
-
-        if (resolver != null) {
-            fopFactory.setURIResolver(resolver);
+        // What version of FOP are we using?
+        // Only 1.x and 2.x are supported!
+        String className = "org.apache.fop.apps.FopFactory";
+        try {
+            klass = Class.forName(className);
+        } catch (ClassNotFoundException cnfe) {
+            klass = null;
         }
 
+        if (klass != null) {
+            try {
+                method = klass.getMethod("newInstance");
+                fopVersion = "1.x";
+            } catch (NoSuchMethodException nsme) {
+                // nop;
+            }
+        }
+
+        if (fopVersion == null) {
+            className = "org.apache.fop.apps.FopFactoryBuilder";
+            try {
+                klass = Class.forName(className);
+                fopVersion = "2.x";
+            } catch (ClassNotFoundException cnfe) {
+                // nop
+            }
+        }
+
+        if ("1.x".equals(fopVersion)) {
+            initializeFop1x(runtime, step, options);
+        } else if ("2.x".equals(fopVersion)) {
+            initializeFop2x(runtime, step, options);
+        } else {
+            throw new XProcException("Failed to instantiate FOP 1.x or FOP 2.x");
+        }
+    }
+
+    private void initializeFop1x(XProcRuntime runtime, XStep step, Properties options) {
         try {
+            fopFactory = method.invoke(klass, (Object[]) null);
+            Class fclass = fopFactory.getClass();
+
+            resolver = runtime.getResolver();
+            if (resolver != null) {
+                method = fclass.getMethod("setURIResolver", URIResolver.class);
+                method.invoke(fopFactory, resolver);
+            }
+
             String s = getStringProp("BaseURL");
             if (s != null) {
-                fopFactory.setBaseURL(s);
+                method = fclass.getMethod("setBaseURL", String.class);
+                method.invoke(fopFactory, s);
             }
 
             Boolean b = getBooleanProp("BreakIndentInheritanceOnReferenceAreaBoundary");
             if (b != null) {
-                fopFactory.setBreakIndentInheritanceOnReferenceAreaBoundary(b);
+                method = fclass.getMethod("setBreakIndentInheritanceOnReferenceAreaBoundary", Boolean.class);
+                method.invoke(fopFactory, b);
             }
 
             s = getStringProp("FontBaseURL");
-            if (s != null) {
-                fopFactory.getFontManager().setFontBaseURL(s);
-            }
-
             b = getBooleanProp("Base14KerningEnabled");
-            if (b != null) {
-                fopFactory.getFontManager().setBase14KerningEnabled(b);
+            if (s != null || b != null) {
+                Method getFontManager = fclass.getMethod("getFontManager");
+                Object fontManager = getFontManager.invoke(fopFactory);
+
+                if (s != null) {
+                    method = fontManager.getClass().getMethod("setFontBaseURL", String.class);
+                    method.invoke(fontManager, s);
+                }
+
+                if (b != null) {
+                    method = fontManager.getClass().getMethod("setBase14KerningEnabled", Boolean.class);
+                    method.invoke(fontManager, b);
+                }
             }
 
             s = getStringProp("HyphenBaseURL");
             if (s != null) {
-                fopFactory.setHyphenBaseURL(s);
+                method = fclass.getMethod("setHyphenBaseURL", String.class);
+                method.invoke(fopFactory, s);
             }
 
             s = getStringProp("PageHeight");
             if (s != null) {
-                fopFactory.setPageHeight(s);
+                method = fclass.getMethod("setPageHeight", String.class);
+                method.invoke(fopFactory, s);
             }
 
             s = getStringProp("PageWidth");
             if (s != null) {
-                fopFactory.setPageWidth(s);
+                method = fclass.getMethod("setPageWidth", String.class);
+                method.invoke(fopFactory, s);
             }
 
             Float f = getFloatProp("SourceResolution");
             if (f != null) {
-                fopFactory.setSourceResolution(f);
+                method = fclass.getMethod("setSourceResolution", Float.class);
+                method.invoke(fopFactory, f);
             }
 
             f = getFloatProp("TargetResolution");
             if (f != null) {
-                fopFactory.setTargetResolution(f);
+                method = fclass.getMethod("setTargetResolution", Float.class);
+                method.invoke(fopFactory, f);
             }
 
             b = getBooleanProp("StrictUserConfigValidation");
             if (b != null) {
-                fopFactory.setStrictUserConfigValidation(b);
+                method = fclass.getMethod("setStrictUserConfigValidation", Boolean.class);
+                method.invoke(fopFactory, b);
             }
 
             b = getBooleanProp("StrictValidation");
             if (b != null) {
-                fopFactory.setStrictUserConfigValidation(b);
+                method = fclass.getMethod("setStrictUserConfigValidation", Boolean.class);
+                method.invoke(fopFactory, b);
             }
 
             b = getBooleanProp("UseCache");
             if (b != null) {
-                fopFactory.getFontManager().setUseCache(b);
+                method = fclass.getMethod("getFontManager().setUseCache", Boolean.class);
+                method.invoke(fopFactory, b);
             }
 
             s = getStringProp("UserConfig");
             if (s != null) {
+                method = fclass.getMethod("setUserConfig", String.class);
+                method.invoke(fopFactory, s);
+            }
+        } catch (Exception e) {
+            throw new XProcException(e);
+        }
+    }
+
+    private void initializeFop2x(XProcRuntime runtime, XStep step, Properties options) {
+        Object fopFactoryBuilder = null;
+        Constructor factBuilderConstructor = null;
+        try {
+            factBuilderConstructor = klass.getConstructor(URI.class);
+        } catch (NoSuchMethodException nsme) {
+            // nop;
+        }
+
+        resolver = runtime.getResolver();
+        URI baseURI = step.getStep().getNode().getBaseURI();
+        String s = getStringProp("BaseURL");
+        if (s != null) {
+            baseURI = baseURI.resolve(s);
+        }
+
+        try {
+            if (resolver == null) {
+                fopFactoryBuilder = factBuilderConstructor.newInstance(baseURI);
+            } else {
+                // FIXME: make an org.apache.xmlgraphics.io.ResourceResolver resolver!?
+                fopFactoryBuilder = factBuilderConstructor.newInstance(baseURI);
+            }
+            Class fclass = fopFactoryBuilder.getClass();
+
+            // FIXME: make this configurable
+            Boolean b = false;
+            /* Why doesn't this call work with reflection?
+            method = fclass.getMethod("setStrictFOValidation", Boolean.class);
+            method.invoke(fopFactoryBuilder, b);
+            */
+
+            b = getBooleanProp("BreakIndentInheritanceOnReferenceAreaBoundary");
+            if (b != null) {
+                method = fclass.getMethod("setBreakIndentInheritanceOnReferenceAreaBoundary", Boolean.class);
+                method.invoke(fopFactoryBuilder, b);
+            }
+
+            Float f = getFloatProp("SourceResolution");
+            if (f != null) {
+                method = fclass.getMethod("setSourceResolution", Float.class);
+                method.invoke(fopFactoryBuilder, f);
+            }
+
+            /* FIXME:
+            s = getStringProp("FontBaseURL");
+            if (s != null) {
+                fopFactory.getFontManager().setFontBaseURL(s);
+            }
+            */
+
+            b = getBooleanProp("Base14KerningEnabled");
+            if (b != null) {
+                Method getFontManager = fclass.getMethod("getFontManager");
+                Object fontManager = getFontManager.invoke(fopFactoryBuilder);
+
+                method = fontManager.getClass().getMethod("setBase14KerningEnabled", Boolean.class);
+                method.invoke(fontManager, b);
+            }
+
+            /* FIXME:
+            s = getStringProp("HyphenBaseURL");
+            if (s != null) {
+                fopFactory.setHyphenBaseURL(s);
+            }
+            */
+
+            s = getStringProp("PageHeight");
+            if (s != null) {
+                method = fclass.getMethod("setPageHeight", String.class);
+                method.invoke(fopFactoryBuilder, s);
+            }
+
+            s = getStringProp("PageWidth");
+            if (s != null) {
+                method = fclass.getMethod("setPageWidth", String.class);
+                method.invoke(fopFactoryBuilder, s);
+            }
+
+            f = getFloatProp("TargetResolution");
+            if (f != null) {
+                method = fclass.getMethod("setTargetResolution", Float.class);
+                method.invoke(fopFactoryBuilder, f);
+            }
+
+            b = getBooleanProp("StrictUserConfigValidation");
+            if (b != null) {
+                method = fclass.getMethod("setStrictUserConfigValidation", Boolean.class);
+                method.invoke(fopFactoryBuilder, b);
+            }
+
+            b = getBooleanProp("StrictValidation");
+            if (b != null) {
+                method = fclass.getMethod("setStrictUserConfigValidation", Boolean.class);
+                method.invoke(fopFactoryBuilder, b);
+            }
+
+            b = getBooleanProp("UseCache");
+            if (b != null && !b) {
+                Method getFontManager = fclass.getMethod("getFontManager");
+                Object fontManager = getFontManager.invoke(fopFactoryBuilder);
+
+                method = fontManager.getClass().getMethod("disableFontCache");
+                method.invoke(fontManager);
+            }
+
+            /* FIXME:
+            s = getStringProp("UserConfig");
+            if (s != null) {
                 fopFactory.setUserConfig(s);
             }
-          } catch (Exception e) {
+            */
+
+            method = fclass.getMethod("build");
+            fopFactory = method.invoke(fopFactoryBuilder);
+        } catch (Exception e) {
             throw new XProcException(e);
         }
     }
@@ -133,78 +315,120 @@ public class FoFOP implements FoProcessor {
             throw new XProcException(step.getNode(), "Unsupported content-type on p:xsl-formatter: " + contentType);
         }
 
+        if (! ("1.x".equals(fopVersion) || "2.x".equals(fopVersion))) {
+            throw new XProcException("Unexpected FOP version: " + fopVersion);
+        }
+
         try {
             InputSource fodoc = S9apiUtils.xdmToInputSource(runtime, doc);
             SAXSource source = new SAXSource(fodoc);
-            Fop fop = fopFactory.newFop(outputFormat, out);
-            FOUserAgent userAgent = fop.getUserAgent();
+
+            Object userAgent = null;
+            Object fop = null;
+
+            if ("1.x".equals(fopVersion)) {
+                method = fopFactory.getClass().getMethod("newFop", String.class, OutputStream.class);
+                fop = method.invoke(fopFactory, outputFormat, out);
+
+                method = fop.getClass().getMethod("getUserAgent");
+                userAgent = method.invoke(fop);
+            } else {
+                method = fopFactory.getClass().getMethod("newFOUserAgent");
+                userAgent = method.invoke(fopFactory);
+            }
+
+            Class uaClass = userAgent.getClass();
 
             Boolean b = getBooleanProp("Accessibility");
             if (b != null) {
-                userAgent.setAccessibility(b);
+                method = uaClass.getMethod("setAccessibility", Boolean.class);
+                method.invoke(userAgent, b);
             }
 
             String s = getStringProp("Author");
             if (s != null) {
-                userAgent.setAuthor(s);
+                method = uaClass.getMethod("setAuthor", String.class);
+                method.invoke(userAgent, s);
             }
 
-            userAgent.setBaseURL(step.getNode().getBaseURI().toString());
-            s = getStringProp("BaseURL");
-            if (s != null) {
-                userAgent.setBaseURL(s);
+            if ("1.x".equals(fopVersion)) {
+                method = uaClass.getMethod("setBaseURL", String.class);
+                method.invoke(userAgent, step.getNode().getBaseURI().toString());
+                s = getStringProp("BaseURL");
+                if (s != null) {
+                    method.invoke(userAgent, s);
+                }
+            } else {
+                // FIXME: how do I do this in 2.x?
             }
 
             b = getBooleanProp("ConserveMemoryPolicy");
             if (b != null) {
-                userAgent.setConserveMemoryPolicy(b);
+                method = uaClass.getMethod("setConserveMemoryPolicy", Boolean.class);
+                method.invoke(userAgent, b);
             }
 
             s = getStringProp("CreationDate");
             if (s != null) {
                 DateFormat df = DateFormat.getDateInstance();
                 Date d = df.parse(s);
-                userAgent.setCreationDate(d);
+                method = uaClass.getMethod("setCreationDate", Date.class);
+                method.invoke(userAgent, d);
             }
 
             s = getStringProp("Creator");
             if (s != null) {
-                userAgent.setCreator(s);
+                method = uaClass.getMethod("setCreator", String.class);
+                method.invoke(userAgent, s);
             }
 
             s = getStringProp("Keywords");
             if (s != null) {
-                userAgent.setKeywords(s);
+                method = uaClass.getMethod("setKeywords", String.class);
+                method.invoke(userAgent, s);
             }
 
             b = getBooleanProp("LocatorEnabled");
             if (b != null) {
-                userAgent.setLocatorEnabled(b);
+                method = uaClass.getMethod("setLocatorEnabled", Boolean.class);
+                method.invoke(userAgent, b);
             }
 
             s = getStringProp("Producer");
             if (s != null) {
-                userAgent.setProducer(s);
+                method = uaClass.getMethod("setProducer", String.class);
+                method.invoke(userAgent, s);
             }
 
             s = getStringProp("Subject");
             if (s != null) {
-                userAgent.setSubject(s);
+                method = uaClass.getMethod("setSubject", String.class);
+                method.invoke(userAgent, s);
             }
 
             Float f = getFloatProp("TargetResolution");
             if (f != null) {
-                userAgent.setTargetResolution(f);
+                method = uaClass.getMethod("setTargetResolution", Float.class);
+                method.invoke(userAgent, f);
             }
 
             s = getStringProp("Title");
             if (s != null) {
-                userAgent.setTitle(s);
+                method = uaClass.getMethod("setTitle", String.class);
+                method.invoke(userAgent, s);
             }
+
+            if ("2.x".equals(fopVersion)) {
+                method = uaClass.getMethod("newFop", String.class, OutputStream.class);
+                fop = method.invoke(userAgent, outputFormat, out);
+            }
+
+            method = fop.getClass().getMethod("getDefaultHandler");
+            Object defHandler = method.invoke(fop);
 
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
-            transformer.transform(source, new SAXResult(fop.getDefaultHandler()));
+            transformer.transform(source, new SAXResult((ContentHandler) defHandler));
         } catch (Exception e) {
             throw new XProcException(step.getNode(), "Failed to process FO document with FOP", e);
         }
@@ -218,8 +442,7 @@ public class FoFOP implements FoProcessor {
         String s = getStringProp(name);
         if (s != null) {
             try {
-                float f = Float.parseFloat(s);
-                return new Float(f);
+                return Float.parseFloat(s);
             } catch (NumberFormatException nfe) {
                 return null;
             }
