@@ -51,6 +51,7 @@ dependencies {
     [group: 'com.nwalsh', name: 'nwalsh-annotations', version: '1.0.0'],
     [group: 'com.xmlcalabash', name: 'xmlcalabash', version: '1.1.7-95'],
     [group: 'org.apache.xmlgraphics', name: 'fop', version: '1.1'],
+    [group: 'xalan', name: 'xalan', version: '2.7.2'],
     [group: 'org.apache.avalon.framework', name: 'avalon-framework-api', version: '4.3.1'],
     [group: 'org.apache.avalon.framework', name: 'avalon-framework-impl', version: '4.3.1']
   )
@@ -146,6 +147,14 @@ task copyJar(dependsOn: jar, type: Copy) {
 task copyJavaDoc(dependsOn: javadoc, type: Copy) {
   from "build/docs"
   into "build/dist/docs"
+}
+
+task testStep(type: JavaExec) {
+  classpath = configurations.copydep + configurations.runtime + sourceSets.main.output
+
+  main = 'com.xmlcalabash.drivers.Main'
+  maxHeapSize = "1024m"
+  args('-D', '-a', 'src/test/resources/test-pipeline.xpl')
 }
 
 task makeDist(dependsOn: [ build, copyJar, copyLib ]) << {
