@@ -1,4 +1,4 @@
-package com.xmlcalabash.util;
+package com.xmlcalabash.util.print;
 
 import com.renderx.xep.FOTarget;
 import com.renderx.xep.FormatterImpl;
@@ -9,6 +9,8 @@ import com.xmlcalabash.core.XProcConstants;
 import com.xmlcalabash.core.XProcException;
 import com.xmlcalabash.core.XProcRuntime;
 import com.xmlcalabash.runtime.XStep;
+import com.xmlcalabash.util.MessageFormatter;
+import com.xmlcalabash.util.S9apiUtils;
 import net.sf.saxon.s9api.XdmNode;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;

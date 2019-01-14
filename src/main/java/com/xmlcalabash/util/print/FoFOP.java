@@ -1,9 +1,10 @@
-package com.xmlcalabash.util;
+package com.xmlcalabash.util.print;
 
 import com.xmlcalabash.config.FoProcessor;
 import com.xmlcalabash.core.XProcException;
 import com.xmlcalabash.core.XProcRuntime;
 import com.xmlcalabash.runtime.XStep;
+import com.xmlcalabash.util.S9apiUtils;
 import net.sf.saxon.s9api.XdmNode;
 import org.apache.avalon.framework.configuration.Configuration;
 import org.apache.avalon.framework.configuration.DefaultConfigurationBuilder;

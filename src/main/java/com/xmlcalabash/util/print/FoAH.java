@@ -1,32 +1,24 @@
-package com.xmlcalabash.util;
+package com.xmlcalabash.util.print;
 
-import com.xmlcalabash.config.CssProcessor;
+import com.xmlcalabash.config.FoProcessor;
 import com.xmlcalabash.core.XProcConstants;
 import com.xmlcalabash.core.XProcException;
 import com.xmlcalabash.core.XProcRuntime;
 import com.xmlcalabash.runtime.XStep;
+import com.xmlcalabash.util.MessageFormatter;
+import com.xmlcalabash.util.S9apiUtils;
 import jp.co.antenna.XfoJavaCtl.MessageListener;
 import jp.co.antenna.XfoJavaCtl.XfoException;
 import jp.co.antenna.XfoJavaCtl.XfoFormatPageListener;
 import jp.co.antenna.XfoJavaCtl.XfoObj;
-import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.Serializer;
 import net.sf.saxon.s9api.XdmNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.util.Properties;
-import java.util.Vector;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -35,16 +27,10 @@ import java.util.zip.GZIPOutputStream;
  * Time: 4:24 PM
  * To change this template use File | Settings | File Templates.
  */
-public class CssAH implements CssProcessor {
-    private Logger logger = LoggerFactory.getLogger(CssAH.class);
-    private static final QName _content_type = new QName("content-type");
-    private static final QName _encoding = new QName("", "encoding");
-
+public class FoAH implements FoProcessor {
+    private Logger logger = LoggerFactory.getLogger(FoAH.class);
     XProcRuntime runtime = null;
     Properties options = null;
-    String primarySS = null;
-    Vector<String> userSS = new Vector<String> ();
-
     XStep step = null;
     XfoObj ah = null;
 
@@ -52,9 +38,10 @@ public class CssAH implements CssProcessor {
         this.runtime = runtime;
         this.step = step;
         this.options = options;
+
         try {
             ah = new XfoObj();
-            ah.setFormatterType(XfoObj.S_FORMATTERTYPE_XMLCSS);
+            ah.setFormatterType(XfoObj.S_FORMATTERTYPE_XSLFO);
             FoMessages msgs = new FoMessages();
             ah.setMessageListener(msgs);
 
@@ -69,17 +56,9 @@ public class CssAH implements CssProcessor {
                 ah.setExitLevel(i);
             }
 
-            s = getStringProp("EmbedAllFontsEx");
-            if (s != null) {
-                if ("part".equals(s.toLowerCase())) {
-                    ah.setPdfEmbedAllFontsEx(XfoObj.S_PDF_EMBALLFONT_PART);
-                } else if ("base14".equals(s.toLowerCase())) {
-                    ah.setPdfEmbedAllFontsEx(XfoObj.S_PDF_EMBALLFONT_BASE14);
-                } else if ("all".equals(s.toLowerCase())) {
-                    ah.setPdfEmbedAllFontsEx(XfoObj.S_PDF_EMBALLFONT_ALL);
-                } else {
-                    throw new XProcException("Unrecognized value for EmbedAllFontsEx");
-                }
+            i = getIntProp("EmbedAllFontsEx");
+            if (i != null) {
+                ah.setPdfEmbedAllFontsEx(i);
             }
 
             i = getIntProp("ImageCompression");
@@ -135,55 +114,6 @@ public class CssAH implements CssProcessor {
             throw new XProcException(xfoe);
         }
     }
-
-    public void addStylesheet(String uri) {
-        if (primarySS == null) {
-            primarySS = uri;
-        } else {
-            userSS.add(uri);
-        }
-    }
-
-    public void addStylesheet(XdmNode doc) {
-        doc = S9apiUtils.getDocumentElement(doc);
-
-        String stylesheet = null;
-        if ((XProcConstants.c_data.equals(doc.getNodeName())
-                && "application/octet-stream".equals(doc.getAttributeValue(_content_type)))
-                || "base64".equals(doc.getAttributeValue(_encoding))) {
-            byte[] decoded = Base64.decode(doc.getStringValue());
-            stylesheet = new String(decoded);
-        } else {
-            stylesheet = doc.getStringValue();
-        }
-
-        String prefix = "temp";
-        String suffix = ".css";
-
-        File temp;
-        try {
-            temp = File.createTempFile(prefix, suffix);
-        } catch (IOException ioe) {
-            throw new XProcException(step.getNode(), "Failed to create temporary file for CSS");
-        }
-
-        temp.deleteOnExit();
-
-        try {
-            PrintStream cssout = new PrintStream(temp);
-            cssout.print(stylesheet);
-            cssout.close();
-        } catch (FileNotFoundException fnfe) {
-            throw new XProcException(step.getNode(), "Failed to write to temporary CSS file");
-        }
-
-        if (primarySS == null) {
-            primarySS = temp.toURI().toASCIIString();
-        } else {
-            userSS.add(temp.toURI().toASCIIString());
-        }
-    }
-
     public void format(XdmNode doc, OutputStream out, String contentType) {
         String outputFormat = null;
         if (contentType == null || "application/pdf".equals(contentType)) {
@@ -197,22 +127,12 @@ public class CssAH implements CssProcessor {
         } else if ("application/vnd.mif".equals(contentType)) {
             outputFormat = "@MIF";
         } else if ("text/plain".equals(contentType)) {
-            outputFormat = "@TXT";
+            outputFormat = "@TEXT";
         } else {
             throw new XProcException(step.getNode(), "Unsupported content-type on p:xsl-formatter: " + contentType);
         }
 
         try {
-            if (primarySS == null) {
-                throw new XProcException("No CSS stylesheets provided");
-            } else {
-                ah.setStylesheetURI(primarySS);
-            }
-
-            for (String uri : userSS) {
-                ah.addUserStylesheetURI(uri);
-            }
-
             Serializer serializer = runtime.getProcessor().newSerializer();
             serializer.setOutputProperty(Serializer.Property.METHOD, "xml");
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -240,7 +160,8 @@ public class CssAH implements CssProcessor {
         String s = getStringProp(name);
         if (s != null) {
             try {
-                return Integer.parseInt(s);
+                int i = Integer.parseInt(s);
+                return new Integer(i);
             } catch (NumberFormatException nfe) {
                 return null;
             }
