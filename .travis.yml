@@ -21,7 +21,7 @@ after_script:
 deploy:
   provider: releases
   api_key:
-    secure: P8aApW12eMPtLZyI84izR27jw3083HLsI79taWUmMiEXNQuyvryx8PEc5jNDN3nhHIAw/fadbbwL+Dfqjv6ahgxOUJLsn9hQrsITg+BzZ0LjB2I4Z8W4ufH/LxQlWPPzWaGypVmBwfYUnh1yHVkFA14cBy9gQHOrbqm6b3erHXQ=
+    secure: ZBlgugg9nsaVsfFEE/bSac1XC3FEfjlv+nkjAtAfg4j+RscHB5VebFxWHMPwfSzjk47TZMSYhhTyHNTLPqeWmbAW+X6j7CnEiGb2Hre/Q8dwvK9EQqhUUM8bbRtZ2QFlFEZArDVyJFu0OBAP+SoV7DAS3+ZXPmazvm1jwYcRo3Q=
   file:
   - build/distributions/xmlcalabash1-print-$TRAVIS_TAG.zip
   on:
