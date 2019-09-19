@@ -24,6 +24,7 @@ deploy:
     secure: ZBlgugg9nsaVsfFEE/bSac1XC3FEfjlv+nkjAtAfg4j+RscHB5VebFxWHMPwfSzjk47TZMSYhhTyHNTLPqeWmbAW+X6j7CnEiGb2Hre/Q8dwvK9EQqhUUM8bbRtZ2QFlFEZArDVyJFu0OBAP+SoV7DAS3+ZXPmazvm1jwYcRo3Q=
   file:
   - build/distributions/xmlcalabash1-print-$TRAVIS_TAG.zip
+  skip_cleanup: true
   on:
     tags: true
     all_branches: true
