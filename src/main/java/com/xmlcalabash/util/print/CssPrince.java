@@ -1,4 +1,4 @@
-package com.xmlcalabash.util;
+package com.xmlcalabash.util.print;
 
 import com.princexml.Prince;
 import com.princexml.PrinceEvents;
@@ -7,6 +7,8 @@ import com.xmlcalabash.core.XProcConstants;
 import com.xmlcalabash.core.XProcException;
 import com.xmlcalabash.core.XProcRuntime;
 import com.xmlcalabash.runtime.XStep;
+import com.xmlcalabash.util.Base64;
+import com.xmlcalabash.util.S9apiUtils;
 import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.Serializer;
@@ -21,7 +23,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 import java.util.Vector;
 

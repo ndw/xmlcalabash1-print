@@ -140,7 +140,9 @@ task testStep(type: JavaExec) {
 }
 
 task makeDist(dependsOn: [ build, copyJar, copyLib ]) {
-  println "Created distribution in build/dist"
+  doLast {
+    println "Created distribution in build/dist"
+  }
 }
 
 task zipDist(dependsOn: makeDist, type: Zip) {
@@ -150,7 +152,9 @@ task zipDist(dependsOn: makeDist, type: Zip) {
 }
 
 task dist(dependsOn: zipDist) {
-  // nop
+  doLast {
+    // nop
+  }
 }
 
 artifacts {
