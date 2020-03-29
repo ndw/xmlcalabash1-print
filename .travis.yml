@@ -1,5 +1,5 @@
 language: java
-script: gradle dist
+script: "./gradlew dist"
 
 install:
 - echo sonatypeUsername=none >> gradle.properties
