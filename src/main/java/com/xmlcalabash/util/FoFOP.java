@@ -5,12 +5,12 @@ import com.xmlcalabash.core.XProcException;
 import com.xmlcalabash.core.XProcRuntime;
 import com.xmlcalabash.runtime.XStep;
 import net.sf.saxon.s9api.XdmNode;
-import org.apache.avalon.framework.configuration.Configuration;
-import org.apache.avalon.framework.configuration.DefaultConfigurationBuilder;
 import org.apache.fop.apps.FOUserAgent;
 import org.apache.fop.apps.Fop;
 import org.apache.fop.apps.FopFactory;
 import org.apache.fop.apps.FopFactoryBuilder;
+import org.apache.fop.configuration.Configuration;
+import org.apache.fop.configuration.DefaultConfigurationBuilder;
 import org.xml.sax.InputSource;
 import org.xml.sax.helpers.DefaultHandler;
 

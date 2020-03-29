@@ -1,29 +1,33 @@
 buildscript {
   repositories {
+    mavenLocal()
     mavenCentral()
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
   }
 
   dependencies {
     classpath fileTree(dir: 'lib').include("*.jar")
     classpath group: 'net.sf.saxon', name: 'Saxon-HE', version: saxonVersion
-    classpath group: 'biz.aQute.bnd', name: 'biz.aQute.bnd.gradle', version: '4.2.0'
+    classpath group: 'biz.aQute.bnd', name: 'biz.aQute.bnd.gradle', version: '5.0.1'
   }
 }
 
 plugins {
   id "java"
-  id "maven"
+  id "maven-publish"
   id "signing"
 }
 
 apply plugin: 'biz.aQute.bnd.builder'
 
 repositories {
+  // For javax.media:jai_core:1.1.3
+  maven { url "https://maven.geotoolkit.org" }
+  // For com.sun.media:jai-codec:1.1.3
+  maven { url "https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/" }
+
+  mavenLocal()
   mavenCentral()
-  maven { url "http://maven.restlet.org" }
-  maven { url "http://developer.marklogic.com/maven2" }
-  maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+  maven { url "https://maven.restlet.org" }
 }
 
 configurations {
@@ -36,27 +40,38 @@ configurations {
   copydep.exclude module: 'nwalsh-annotations'
 }
 
+configurations.all {
+  resolutionStrategy {
+    force 'xml-apis:xml-apis:1.4.01'
+  }
+}
+
 dependencies {
   localLibs fileTree(dir: 'lib').include("*.jar")
-  compile (
+  implementation (
     [group: 'com.nwalsh', name: 'nwalsh-annotations', version: '1.0.0'],
-    [group: 'com.xmlcalabash', name: 'xmlcalabash', version: '1.1.27-99'],
-    [group: 'org.apache.xmlgraphics', name: 'fop', version: '2.3'],
+    [group: 'com.xmlcalabash', name: 'xmlcalabash', version: xmlCalabashVersion],
+    [group: 'org.apache.xmlgraphics', name: 'fop', version: '2.4'],
     [group: 'xalan', name: 'xalan', version: '2.7.2'],
     [group: 'org.apache.avalon.framework', name: 'avalon-framework-api', version: '4.3.1'],
-    [group: 'org.apache.avalon.framework', name: 'avalon-framework-impl', version: '4.3.1']
+    [group: 'org.apache.avalon.framework', name: 'avalon-framework-impl', version: '4.3.1'],
+    [group: 'javax.media', name: 'jai_core', version: '1.1.3'],
+    [group: 'com.sun.media', name: 'jai-codec', version: '1.1.3']
   )
 }
 
 // Variables
 project.ext.saxonRelease = saxonVersion.substring(0,5)
 project.ext.saxonBranch  = saxonVersion.substring(0,3).replaceAll("\\.", "")
-project.ext.releaseVersion = version
-project.ext.distVersion = version + snapshot
-version = project.ext.distVersion // - gets turned into . in some contexts
+project.ext.releaseVersion = relVersion
+project.ext.distVersion = relVersion + snapshot
+relVersion = project.ext.distVersion // - gets turned into . in some contexts
 
 compileJava {
   classpath += configurations.localLibs
+  options.deprecation = true
+  options.compilerArgs += ['-Xlint:deprecation']
+  options.annotationProcessorPath = configurations.compileClasspath
 }
 
 javadoc {
@@ -82,6 +97,7 @@ task copyCatalog(type: Copy) {
 }
 
 jar {
+  archiveBaseName = "xmlcalabash1-print-" + relVersion
   from { ['build/catalog.xml', 'resources/library.xpl'] }
   bnd ('Bundle-Vendor': 'Norman Walsh',
        'Bundle-Description': 'XML Calabash paged media support.',
@@ -132,7 +148,7 @@ task copyJavaDoc(dependsOn: javadoc, type: Copy) {
 }
 
 task testStep(type: JavaExec) {
-  classpath = configurations.copydep + configurations.runtime + sourceSets.main.output
+  classpath = configurations.copydep + configurations.runtimeClasspath + sourceSets.main.output
 
   main = 'com.xmlcalabash.drivers.Main'
   maxHeapSize = "1024m"
@@ -140,69 +156,71 @@ task testStep(type: JavaExec) {
 }
 
 task makeDist(dependsOn: [ build, copyJar, copyLib ]) {
-  println "Created distribution in build/dist"
+  doLast {
+    println("Created distribution in build/dist")
+  }
 }
 
 task zipDist(dependsOn: makeDist, type: Zip) {
   from('build/dist')
   into 'xmlcalabash1-print-' + distVersion
-  archiveName 'xmlcalabash1-print-' + distVersion + ".zip"
+  archiveFileName = 'xmlcalabash1-print-' + distVersion + ".zip"
 }
 
 task dist(dependsOn: zipDist) {
   // nop
 }
 
-artifacts {
-  archives javadocJar
-  archives sourcesJar
-}
-
 signing {
-  required { gradle.taskGraph.hasTask("uploadArchives") }
-  sign configurations.archives
+  sign publishing.publications
 }
 
-uploadArchives {
-  repositories {
-    mavenDeployer {
-      beforeDeployment { MavenDeployment deployment ->
-        signing.signPom(deployment) }
-
-      repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-        authentication(userName: sonatypeUsername, password: sonatypePassword)
-      }
-
-      snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-        authentication(userName: sonatypeUsername, password: sonatypePassword)
-      }
-
-      pom.project {
-        name 'XML Calabash print support'
-        packaging 'jar'
-        description 'XML Calabash support for printing with FO and CSS'
-        url 'https://github.com/ndw/xmlcalabash1-print'
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      pom {
+        name = 'XML Calabash print support'
+        packaging = 'jar'
+        description = 'XML Calabash support for printing with FO and CSS'
+        url = 'https://github.com/ndw/xmlcalabash1-print'
 
         scm {
-          url 'scm:git@github.com:ndw/xmlcalabash1-print.git'
-          connection 'scm:git@github.com:ndw/xmlcalabash1-print.git'
-          developerConnection 'scm:git@github.com:ndw/xmlcalabash1-print.git'
+          url = 'scm:git@github.com:ndw/xmlcalabash1-print.git'
+          connection = 'scm:git@github.com:ndw/xmlcalabash1-print.git'
+          developerConnection = 'scm:git@github.com:ndw/xmlcalabash1-print.git'
         }
 
         licenses {
           license {
-            name 'The Apache Software License, Version 2.0'
-            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-            distribution 'repo'
+            name = 'The Apache Software License, Version 2.0'
+            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            distribution = 'repo'
           }
         }
 
         developers {
           developer {
-            id 'ndw'
-            name 'Norman Walsh'
+            id = 'ndw'
+            name = 'Norman Walsh'
           }
         }
+      }
+
+      groupId = "com.xmlcalabash"
+      artifactId = "xmlcalabash1-print"
+      version = relVersion
+      from components.java
+      artifact javadocJar
+      artifact sourcesJar
+    }
+  }
+
+  repositories {
+    maven {
+      url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+      credentials {
+        username = sonatypeUsername
+        password = sonatypePassword
       }
     }
   }
