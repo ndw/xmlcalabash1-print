@@ -258,7 +258,7 @@ public class CssPrince implements CssProcessor {
         if (s != null) {
             try {
                 int i = Integer.parseInt(s);
-                return new Integer(i);
+                return i;
             } catch (NumberFormatException nfe) {
                 return null;
             }
