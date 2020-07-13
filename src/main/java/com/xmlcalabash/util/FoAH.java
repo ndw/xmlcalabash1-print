@@ -126,7 +126,11 @@ public class FoAH implements FoProcessor {
             outputFormat = "@MIF";
         } else if ("text/plain".equals(contentType)) {
             outputFormat = "@TEXT";
-        } else {
+        }
+	  else if ("text/xml".equals(contentType)) {
+            outputFormat = "@AreaTree";
+        }
+	    else {
             throw new XProcException(step.getNode(), "Unsupported content-type on p:xsl-formatter: " + contentType);
         }
 
