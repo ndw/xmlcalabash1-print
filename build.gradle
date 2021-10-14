@@ -13,7 +13,7 @@ buildscript {
 
 plugins {
   id "java"
-  id "maven"
+  // id "maven"
   id "signing"
 }
 
@@ -21,24 +21,23 @@ apply plugin: 'biz.aQute.bnd.builder'
 
 repositories {
   mavenCentral()
-  maven { url "http://maven.restlet.org" }
-  maven { url "http://developer.marklogic.com/maven2" }
+  maven { url "https://maven.restlet.org" }
+  maven { url "https://developer.marklogic.com/maven2" }
   maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
 
 configurations {
   localLibs
 
-  copydep {
-    extendsFrom runtime
-  }
+  copydep.extendsFrom(runtime)
   copydep.exclude module: 'xmlcalabash'
   copydep.exclude module: 'nwalsh-annotations'
 }
 
 dependencies {
   localLibs fileTree(dir: 'lib').include("*.jar")
-  compile (
+
+  implementation (
     [group: 'com.nwalsh', name: 'nwalsh-annotations', version: '1.0.0'],
     [group: 'com.xmlcalabash', name: 'xmlcalabash', version: '1.1.27-99'],
     [group: 'org.apache.xmlgraphics', name: 'fop', version: '2.3'],
@@ -167,6 +166,7 @@ signing {
   sign configurations.archives
 }
 
+/*
 uploadArchives {
   repositories {
     mavenDeployer {
@@ -211,3 +211,5 @@ uploadArchives {
     }
   }
 }
+*/
+
