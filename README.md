@@ -10,11 +10,11 @@ printing with
 
 Support is included for XSL FO processing with
 [FOP](https://xmlgraphics.apache.org/fop/),
-[AntennaHouse](http://www.antennahouse.com/antenna1/xsl-specification/),
+[Antenna House](https://www.antennahouse.com/xsl-specification),
 or
 [RenderX](http://www.renderx.com/)
 and CSS processing with
-[AntennaHouse](http://www.antennahouse.com/antenna1/css/)
+[Antenna House](http://www.antennahouse.com/css/)
 or
 [PrinceXML](http://www.princexml.com/).
 
